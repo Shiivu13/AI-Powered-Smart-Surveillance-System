@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+  # ── Redis Broker ─────────────────────────────────────────────────────────────
+  redis:
+    image: redis:latest
+    container_name: surv-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── FastAPI Ingestion API ─────────────────────────────────────────────────────
+  api:
+    build: .
+    container_name: surv-api
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./captures:/app/captures
+      - ./known_faces:/app/known_faces
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Celery Worker ─────────────────────────────────────────────────────────────
+  worker:
+    build: .
+    container_name: surv-worker
+    command: celery -A backend.worker worker --loglevel=info -P solo
+    volumes:
+      - ./captures:/app/captures
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  captures:

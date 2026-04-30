@@ -1,0 +1,9 @@
+.env
+__pycache__/
+*.pyc
+captures/*
+!captures/.gitkeep
+yolov8n.pt
+face_encodings.pkl
+*.jpg
+!known_faces/*.jpg

@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+celery
+redis
+supabase
+python-dotenv
+requests
+deepface
+tf-keras
+opencv-python-headless
+ultralytics
+numpy
